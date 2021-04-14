@@ -8,7 +8,8 @@ class Vizu(pyglet.window.Window):
         self.b = []
 
         # (40,40) to (1000,1000)
-        rect_width = 1000/42
+        self.rect_width = 1000/42
+        rect_width = self.rect_width
         i = 0
         for row in board:
             for cell in row:
@@ -17,7 +18,6 @@ class Vizu(pyglet.window.Window):
                 i+=1
 
         super().__init__(width=1000, height=1000)
-        pyglet.app.run()
 
     def on_draw(self):
         self.clear()
@@ -37,6 +37,19 @@ class Vizu(pyglet.window.Window):
             return (10,200,20)
         else:
             return (0,0,0)
+    
+    def run(self):
+        pyglet.app.run()
+
+    def draw_path(self, points):
+        self.path = []
+        rect_width = self.rect_width
+        for i in range(len(points)-1):
+            start = points[i]
+            end = points[i+1]
+            self.path.append(shapes.Line((start[0]+.5)*rect_width, (start[1]+.5)*rect_width, 
+                             (end[0]+.5)*rect_width, (end[1]+.5)*rect_width, width=5, color=(200,50,50), batch=self.batch))
+
 
 
     

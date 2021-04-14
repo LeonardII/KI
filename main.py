@@ -1,5 +1,16 @@
 from vizualisation import Vizu
+from queue import PriorityQueue
 
+class Point:
+    def __init__(self, x: int, y: int):
+        self.x = x
+        self.y = y
+    def __lt__(self, other):
+        return self.x + self.y < other.x + other.y
+    def __str__(self):
+        return "("+str(self.x)+","+str(self.y)+")"
+    def __hash__(self):
+        return hash((self.x, self.y))
 
 def read_csv():
     board = []
@@ -35,40 +46,48 @@ v_berg = 4
 # Einweg boot
 # 0 Wasser, 1 Wiese, 2 Weg, 3 bergiges Gelände, 4 Wald
 
-def dist(a, b):
-    return abs(a[0]-b[0]) + abs(a[1]-b[1])
+def dist(a: Point, b: Point):
+    return abs(a.x-b.x) + abs(a.y-b.y)
 
-def kosten(a):
-    return board[a[0], a[1]]
+def kosten(a: Point):
+    feld = board[a.x][a.y]
+    return 1
 
-def nachbar(i):
-    return [(i[0]+1,i[1]),(i[0],i[1]+1),(i[0]-1,i[1]),(i[0],i[1]-1)]
+def nachbar(i: Point):
+    neighbors = [Point(i.x+1,i.y),Point(i.x,i.y+1),Point(i.x-1,i.y),Point(i.x,i.y-1)]
+    moin = [n for n in neighbors if n.x >= 0 and n.y >= 0 and n.x < len(board) and n.y < len(board[0])]
+    return moin
 
-def a_star(board, start: Location, goal: Location):
+
+def a_star(board, start: Point, goal: Point):
     frontier = PriorityQueue()
     frontier.put(start, 0)
-    came_from: Dict[Location, Optional[Location]] = {}
-    cost_so_far: Dict[Location, float] = {}
+    came_from = dict()
+    cost_so_far = dict()
     came_from[start] = None
     cost_so_far[start] = 0
     
     while not frontier.empty():
         current = frontier.get()
-        
+        print(current)
         if current == goal:
             break
         
         for next in nachbar(current):
             new_cost = cost_so_far[current] + kosten(next)
+            print(next, new_cost)
             if next not in cost_so_far or new_cost < cost_so_far[next]:
                 cost_so_far[next] = new_cost
                 priority = new_cost + dist(next, goal)
                 frontier.put(next, priority)
                 came_from[next] = current
-    
+
     return came_from, cost_so_far
 
-#came_from, cost_so_far = a_star(board, (2,2), (10,9))
-#print(came_from, cost_so_far)
+came_from, cost_so_far = a_star(board, Point(7,7), Point(4,5))
+print(came_from, cost_so_far)
 
 vizu = Vizu(board)
+path = [(1,5),(2,5),(2,6),(2,7),(1,7)]
+vizu.draw_path(path)
+vizu.run()
