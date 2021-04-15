@@ -14,6 +14,12 @@ class Point:
     def __hash__(self):
         return hash((self.x, self.y))
 
+from enum import Enum
+class BootStatus(Enum):
+    VERFUEGBAR = 0
+    SCHWIMMT = 1
+    VERBRAUCHT = 2
+
 def read_csv():
     board = []
     import csv
@@ -52,21 +58,32 @@ v_nicht_begehbar = 10000
 def dist(a: Point, b: Point):
     return abs(a.x-b.x) + abs(a.y-b.y)
 
-def kosten(a: Point):
+def kosten(a: Point, boot_status: BootStatus): 
     feld = board[a.y][a.x]
     if feld == 0: # Wasser
-        return v_nicht_begehbar
-    elif feld == 1: # Wiese
-        return v_wiese_boot
-    elif feld == 2: # Weg
-        return v_weg
-    elif feld == 3: # bergiges Gelände
-        return v_berg
-    elif feld == 4: # Wald
-        return v_wald
-    else:
+        if boot_status == BootStatus.VERFUEGBAR:
+            return v_wiese_boot, BootStatus.SCHWIMMT
+        elif boot_status == BootStatus.SCHWIMMT:
+            return v_wiese_boot, BootStatus.SCHWIMMT
+        elif boot_status == BootStatus.VERBRAUCHT:
+            return v_nicht_begehbar, BootStatus.VERBRAUCHT
         print("ERROR")
-        return -1
+        return 0,0
+    else:
+        if boot_status == BootStatus.SCHWIMMT:
+            boot_status = BootStatus.VERBRAUCHT
+
+        if feld == 1: # Wiese
+            return v_wiese_boot, boot_status
+        elif feld == 2: # Weg
+            return v_weg, boot_status
+        elif feld == 3: # bergiges Gelände
+            return v_berg, boot_status
+        elif feld == 4: # Wald
+            return v_wald, boot_status
+        else:
+            print("ERROR")
+            return -1, boot_status
 
 def nachbar(i: Point):
     neighbors = [Point(i.x+1,i.y),Point(i.x,i.y+1),Point(i.x-1,i.y),Point(i.x,i.y-1)]
@@ -79,39 +96,39 @@ def a_star(board, start: Point, goal: Point):
     frontier.put((0, start))
     came_from = dict()
     cost_so_far = dict()
-    came_from[start] = None
+    came_from[start] = (None, BootStatus.VERFUEGBAR)
     cost_so_far[start] = 0
     
     while not frontier.empty():
         current = frontier.get()
         currentPoint = current[1]
-        print("current",current[0],current[1], "kosten", kosten(currentPoint))
         if currentPoint == goal:
             break
         
         for p in nachbar(currentPoint):
-            new_cost = cost_so_far[currentPoint] + kosten(p)
+            boot_status = came_from[currentPoint][1]
+            k, boot_status = kosten(p, boot_status)
+            new_cost = cost_so_far[currentPoint] + k
             print(p, new_cost)
             if p not in cost_so_far or new_cost < cost_so_far[p]:
                 cost_so_far[p] = new_cost
                 priority = new_cost + dist(p, goal)
                 frontier.put((priority, p))
-                came_from[p] = currentPoint
+                came_from[p] = (currentPoint, boot_status)
 
     return came_from, cost_so_far
 
 
-startTile = Point(0,0)
-goalTile = Point(39,40)
+startTile = Point(0,20)
+goalTile = Point(36 ,22)
 came_from, cost_so_far = a_star(board, startTile, goalTile)
 
-print("fjkdlsa", kosten(Point(28,33)))
 
 path = []
 toTile = goalTile
 path.append(toTile)
 while toTile != startTile:
-    fromTile = came_from[toTile]
+    fromTile = came_from[toTile][0]
     path.append(fromTile)
     toTile = fromTile
 
