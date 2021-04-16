@@ -1,9 +1,9 @@
-
 import pyglet
 from pyglet import shapes
 from enum import Enum
 from algo import Point, Params
 from pyglet.window import mouse
+from pyglet.text import Label
 
 
 class UIStatus(Enum):
@@ -19,8 +19,8 @@ class Vizu(pyglet.window.Window):
         self.batch = pyglet.graphics.Batch()
         self.b = []
 
-        # (40,40) to (1000,1000)
-        self.rect_width = 1000/42
+        lange_seite = max(len(board),len(board[0]))
+        self.rect_width = self.height/lange_seite
         i = 0
         for row in board:
             for cell in row:
@@ -35,6 +35,7 @@ class Vizu(pyglet.window.Window):
         self.path = []
         self.uiStatus = UIStatus.STARTWAHL
 
+        self.recalc_button = Button("Neu Berechnen", 66, 700, 66, 33, self.batch)
         self.labels = [
             pyglet.text.Label('Weg', x=10, y=950, anchor_y='bottom',
                               color=(255, 255, 255, 255), batch=self.batch),
@@ -138,6 +139,8 @@ class Vizu(pyglet.window.Window):
                     self.goalPoint = Point(int((x-self.parameter_input_width)/self.rect_width), int((self.height-y)/self.rect_width))
                     self.set_goal(self.goalPoint.x, self.goalPoint.y)
                     self.uiStatus = UIStatus.STARTBERECHNUNG
+            if self.recalc_button.hit_test(x,y) and self.uiStatus == UIStatus.STARTWAHL and self.startTile != None and self.goalTile != None:
+                self.uiStatus = UIStatus.STARTBERECHNUNG
 
         if self.focus:
             self.focus.caret.on_mouse_press(x, y, button, modifiers)
@@ -157,11 +160,14 @@ class Vizu(pyglet.window.Window):
             self.update_params()
 
     def update_params(self):
-        self.parameters.t_weg = int(self.widgets[0].document.text)
-        self.parameters.t_wiese = int(self.widgets[1].document.text)
-        self.parameters.t_boot = int(self.widgets[2].document.text)
-        self.parameters.t_wald = int(self.widgets[3].document.text)
-        self.parameters.t_berg = int(self.widgets[4].document.text)
+        try:
+            self.parameters.t_weg = int(self.widgets[0].document.text)
+            self.parameters.t_wiese = int(self.widgets[1].document.text)
+            self.parameters.t_boot = int(self.widgets[2].document.text)
+            self.parameters.t_wald = int(self.widgets[3].document.text)
+            self.parameters.t_berg = int(self.widgets[4].document.text)
+        except ValueError:
+            print("value error")
       
     def on_text_motion_select(self, motion):
         if self.focus:
@@ -222,6 +228,19 @@ class TextWidget(object):
     def hit_test(self, x, y):
         return (0 < x - self.layout.x < self.layout.width and
                 0 < y - self.layout.y < self.layout.height)
+
+class Button(object):
+    def __init__(self, text, x, y, width, height, batch):
+        self.rect = Rectangle(x,y,x+width,y+height, batch)
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+    
+    def hit_test(self, x, y):
+        return (0 < x - self.x < self.width and
+                0 < y - self.y < self.height)
+
 
 class Rectangle(object):
     '''Draws a rectangle into a batch.'''
