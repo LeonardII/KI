@@ -20,15 +20,20 @@ class BootStatus(Enum):
     SCHWIMMT = 1
     VERBRAUCHT = 2
 
+class Params:
+    def __init__(self):
+        self.t_weg = 2
+        self.t_wiese = 4
+        self.t_boot = 4
+        self.t_wald = 6
+        self.t_berg = 9
+        self.t_nicht_begehbar = 10000 #todo biggest int
+
+
 class A_Star:
-    def __init__(self, board):
-        #Reißekosten TODO v umbenennen
-        self.v_weg = 2
-        self.v_wiese_boot = 4
-        self.v_wald = 6
-        self.v_berg = 9
-        self.v_nicht_begehbar = 10000 #todo biggest int
+    def __init__(self, board, parameters: Params):
         self.board = board
+        self.parameters = parameters
         
     # Manhattan distanz
     def dist(self, a: Point, b: Point):
@@ -43,11 +48,11 @@ class A_Star:
         feld = self.board[a.y][a.x]
         if feld == 0: # Wasser
             if boot_status == BootStatus.VERFUEGBAR:
-                return self.v_wiese_boot, BootStatus.SCHWIMMT
+                return self.parameters.t_boot, BootStatus.SCHWIMMT
             elif boot_status == BootStatus.SCHWIMMT:
-                return self.v_wiese_boot, BootStatus.SCHWIMMT
+                return self.parameters.t_boot, BootStatus.SCHWIMMT
             elif boot_status == BootStatus.VERBRAUCHT:
-                return self.v_nicht_begehbar, BootStatus.VERBRAUCHT
+                return self.parameters.t_nicht_begehbar, BootStatus.VERBRAUCHT
             print("ERROR")
             return -1, 0
         else:
@@ -55,13 +60,13 @@ class A_Star:
                 boot_status = BootStatus.VERBRAUCHT
 
             if feld == 1: # Wiese
-                return self.v_wiese_boot, boot_status
+                return self.parameters.t_wiese, boot_status
             elif feld == 2: # Weg
-                return self.v_weg, boot_status
+                return self.parameters.t_weg, boot_status
             elif feld == 3: # bergiges Gelände
-                return self.v_berg, boot_status
+                return self.parameters.t_berg, boot_status
             elif feld == 4: # Wald
-                return self.v_wald, boot_status
+                return self.parameters.t_wald, boot_status
             else:
                 print("ERROR")
                 return -1, 0
@@ -74,6 +79,7 @@ class A_Star:
 
     # a star calculation
     def calc(self, start: Point, goal: Point):
+        print("Berechne kürzesten Weg von",start,"nach",goal,"\nmit den Parametern",vars(self.parameters))
         queue = PriorityQueue()
         queue.put((0, start))
         came_from = dict()

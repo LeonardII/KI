@@ -1,6 +1,7 @@
-from vizualisation import Vizu
+
 from _thread import start_new_thread
-from algo import Point, A_Star
+from algo import Point, A_Star, Params
+
 
 def read_csv():
     board = []
@@ -25,53 +26,47 @@ for y in board:
         print(x, end=" ")
     print()
 
-vizu = Vizu(board)
+parameters = Params()
+
+from vizualisation import Vizu, UIStatus
+vizu = Vizu(board, parameters)
 start_new_thread(vizu.run, () )
 
-calculator = A_Star(board)
-startTile = Point(0,20)
-goalTile = Point(36 ,22)
+calculator = A_Star(board, parameters)
 
-from vizualisation import UIStatus
-from pyglet.window import mouse
-from pyglet.text import layout, caret, document
+from pyglet.text import layout, caret, document, Label
 
-document = document.FormattedDocument()
-my_layout = layout.IncrementalTextLayout(document,vizu.parameter_input_width, 500)
-caret = caret.Caret(my_layout)
-caret.color = (255,0,0)
-vizu.push_handlers(caret)
+y_offset = 1000 - 25
+def add_edit_box(vizu: Vizu, name: str, start_value: int):
+    global y_offset
+    label = Label(name, font_name='Arial', x=10, y=y_offset, batch=vizu.batch)
+    doc = document.FormattedDocument(text=str(start_value))
+    doc.set_style(0,100, dict(font_name ='Arial', font_size = 16, color =(255, 255, 255, 255)))
+    my_layout = layout.IncrementalTextLayout(doc,width=vizu.parameter_input_width/2, height=50, batch=vizu.batch)
+    my_layout.x = vizu.parameter_input_width/2
+    my_layout.y = y_offset - 32
+    car = caret.Caret(my_layout, color=(255,255,255))
+    vizu.push_handlers(car)
+    y_offset -= 50
 
-@vizu.event
-def on_mouse_press(x, y, buttons, modifiers):
-    global startTile, goalTile
-    if buttons & mouse.LEFT:
-        if x < vizu.parameter_input_width:
-            return
-        if vizu.uiStatus == UIStatus.STARTWAHL:
-            startTile = Point(int((x-vizu.parameter_input_width)/vizu.rect_width), int((vizu.height-y)/vizu.rect_width))
-            vizu.set_start(startTile.x, startTile.y)
-            vizu.uiStatus = UIStatus.ZIELWAHL
-        elif vizu.uiStatus == UIStatus.ZIELWAHL:
-            goalTile = Point(int((x-vizu.parameter_input_width)/vizu.rect_width), int((vizu.height-y)/vizu.rect_width))
-            vizu.set_goal(goalTile.x, goalTile.y)
-            vizu.uiStatus = UIStatus.STARTBERECHNUNG
 
 while True:
     if vizu.uiStatus == UIStatus.STARTBERECHNUNG:
-        print("calc ", startTile, goalTile)
-        came_from, cost_so_far = calculator.calc(startTile, goalTile)
+        start = vizu.startPoint
+        goal = vizu.goalPoint
+        came_from, cost_so_far = calculator.calc(start, goal)
         path = []
-        toTile = goalTile
+        toTile = goal
         path.append(toTile)
-        while toTile != startTile:
+        while toTile != start:
             fromTile = came_from[toTile][0]
             path.append(fromTile)
             toTile = fromTile
-        
+        path.reverse()
 
         vizu.draw_path(path)
-        vizu.uiStatus = UIStatus.STARTWAHL
+        print("Günstigster Weg:", "->".join(str(x) for x in path))
 
+        vizu.uiStatus = UIStatus.STARTWAHL
 
 
