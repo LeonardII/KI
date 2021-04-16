@@ -72,7 +72,7 @@ class A_Star:
         moin = [n for n in neighbors if n.x >= 0 and n.y >= 0 and n.x < len(self.board[0]) and n.y < len(self.board)]
         return moin
 
-
+    # a star calculation
     def calc(self, start: Point, goal: Point):
         queue = PriorityQueue()
         queue.put((0, start))

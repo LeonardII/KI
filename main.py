@@ -34,16 +34,26 @@ goalTile = Point(36 ,22)
 
 from vizualisation import UIStatus
 from pyglet.window import mouse
+from pyglet.text import layout, caret, document
+
+document = document.FormattedDocument()
+my_layout = layout.IncrementalTextLayout(document,vizu.parameter_input_width, 500)
+caret = caret.Caret(my_layout)
+caret.color = (255,0,0)
+vizu.push_handlers(caret)
+
 @vizu.event
 def on_mouse_press(x, y, buttons, modifiers):
     global startTile, goalTile
     if buttons & mouse.LEFT:
+        if x < vizu.parameter_input_width:
+            return
         if vizu.uiStatus == UIStatus.STARTWAHL:
-            startTile = Point(int(x/vizu.rect_width), int((vizu.height-y)/vizu.rect_width))
+            startTile = Point(int((x-vizu.parameter_input_width)/vizu.rect_width), int((vizu.height-y)/vizu.rect_width))
             vizu.set_start(startTile.x, startTile.y)
             vizu.uiStatus = UIStatus.ZIELWAHL
         elif vizu.uiStatus == UIStatus.ZIELWAHL:
-            goalTile = Point(int(x/vizu.rect_width), int((vizu.height-y)/vizu.rect_width))
+            goalTile = Point(int((x-vizu.parameter_input_width)/vizu.rect_width), int((vizu.height-y)/vizu.rect_width))
             vizu.set_goal(goalTile.x, goalTile.y)
             vizu.uiStatus = UIStatus.STARTBERECHNUNG
 
@@ -59,9 +69,6 @@ while True:
             path.append(fromTile)
             toTile = fromTile
         
-        for p in path:
-            print(p, end=" ")
-        print()
 
         vizu.draw_path(path)
         vizu.uiStatus = UIStatus.STARTWAHL
