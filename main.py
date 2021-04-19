@@ -19,30 +19,38 @@ def read_csv():
                 x+=1
             board.append(row_numbers)
 
+
+
 if __name__=="__main__":
+
+    # CSV Einlesen
     board = read_csv()
     for y in board:
         for x in y:
             print(x, end=" ")
         print()
 
+    # Parameter für den Algorithmus initialisieren
     parameters = Params()
 
+    # Visualisierung in thread starten mit dem Board und den Parametern 
     vizu = Vizu(board, parameters)
     start_new_thread(vizu.run, () )
 
+    # Algorithmusrechner initialisieren
     calculator = A_Star(board, parameters)
 
     while True:
+        # Wenn von der GUI STARTBERECHNUNG gesetzt wird, soll gerechnet werden 
         if vizu.uiStatus == UIStatus.STARTBERECHNUNG:
             start = vizu.startPoint
             ziel = vizu.goalPoint
 
+            # A Stern ausführen
             kommt_von, kosten_bis_punkt, ziel_mit_status = calculator.calc(start, ziel)
 
-
+            # Pfad aus dict erstellen
             path = []
-
             toTile = ziel_mit_status
             path.append(toTile)
             while toTile != PointBootStatus(start, BootStatus.VERFUEGBAR):
@@ -51,6 +59,7 @@ if __name__=="__main__":
                 toTile = fromTile
             path.reverse()
 
+            # Pfad visualisieren, ausgeben
             vizu.draw_path(path)
             print("Günstigster Weg:", "->".join(str(x.point) for x in path))
             print("Gesamtkosten:", kosten_bis_punkt[ziel_mit_status])

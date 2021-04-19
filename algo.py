@@ -3,6 +3,7 @@ from enum import Enum
 import sys
 
 class Point:
+    '''Punkt mit x,y Koordinate'''
     def __init__(self, x: int, y: int):
         self.x = x
         self.y = y
@@ -21,6 +22,7 @@ class BootStatus(Enum):
     VERBRAUCHT = 2
 
 class PointBootStatus():
+    '''Punkt und Bootstatus in einem Objekt'''
     def __init__(self, point: Point, boot_status: BootStatus):
         self.boot_status = boot_status
         self.point = point
@@ -34,6 +36,11 @@ class PointBootStatus():
         return " ["+str(self.point)+" "+str(self.boot_status)+"]"
 
 class Params:
+    '''
+    Parameter für A_Star
+    Kacheln haben unterschiedliche Reisegeschwindigkeiten(Kosten)
+    Ein Parameterobjekt wird mit A_Star und Vizu geteilt um Parameter aus der GUI zu ändern
+    '''
     def __init__(self):
         self.t_weg = 2
         self.t_wiese = 4
@@ -44,6 +51,9 @@ class Params:
 
 
 class A_Star:
+    '''
+    Beinhaltet den eigentlichen Algorithmus und Helferfunktionen
+    '''
     def __init__(self, board, parameters: Params):
         self.board = board
         self.parameters = parameters
@@ -54,7 +64,7 @@ class A_Star:
 
     # Die Kosten auf eine Kachel zu reißen hängen vom Typ der Zielkachel ab
     # Je nach dem wie schnell man auf der Kachel reißt, unterscheiden sich die Kosten der Kachel
-    # Wenn ein Boot verfügbar ist, kann dies benutzt werde, sindder Status geht auf 'SCHWIMMT'
+    # Wenn ein Boot verfügbar ist, kann dies benutzt werde, der Status geht auf 'SCHWIMMT'
     # Wenn man schon im Wasser ist (SCHWIMMT), kann man weiter auf dem Wasser fahren, oder an Land gehen
     # Geht man nach dem Status 'SCHWIMMT' an Land ist der boot_status 'VERBRAUCHT', das Boot kann nicht mehr genutzt werden
     def kosten(self, ziel: Point, boot_status: BootStatus) -> (int, BootStatus): 
@@ -93,6 +103,8 @@ class A_Star:
     # a star Algorithmus
     def calc(self, startPoint: Point, zielPoint: Point):
         print("Berechne kürzesten Weg von",startPoint,"nach",zielPoint,"\nmit den Parametern",vars(self.parameters))
+
+        # PriorityQueue ist ein Heap, welcher immer Punkt mit der kleinsten Priorität ausgeben kann
         queue = PriorityQueue()
         start = PointBootStatus(startPoint,BootStatus.VERFUEGBAR)
         queue.put((0, start))
@@ -105,19 +117,24 @@ class A_Star:
         
         currentPoint = None
         while not queue.empty():
-            current = queue.get()
-            currentPoint = current[1]
+            currentPoint = queue.get()[1]
+
             if currentPoint.point == zielPoint:
-                break
+                break # Ziel gefunden
             
             boot_status = currentPoint.boot_status
+
+            # Nachbarpunkte werden untersucht
             for p in self.nachbar(currentPoint.point):
                 p_kosten, p_boot_status = self.kosten(p, boot_status)
                 p_gesamt_kosten = kosten_bis_punkt[currentPoint] + p_kosten
                 p_mit_boot_status = PointBootStatus(p, p_boot_status)
-
+                
+                # Nachbarpunkt wird in dicts und queue aufgenommen, oder seine Kosten aktuallisiert, wenn ein billigerer Pfad gefunden wurde
                 if p_mit_boot_status not in kosten_bis_punkt or p_gesamt_kosten < kosten_bis_punkt[p_mit_boot_status]:
                     kosten_bis_punkt[p_mit_boot_status] = p_gesamt_kosten
+
+                    # Priorität sind hier die Gesamtkosten + Abstand zum Ziel
                     priority = p_gesamt_kosten + self.dist(p, zielPoint)
                     queue.put((priority, p_mit_boot_status))
                     kommt_von[p_mit_boot_status] = currentPoint
