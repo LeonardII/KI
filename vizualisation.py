@@ -14,7 +14,7 @@ class UIStatus(Enum):
 class Vizu(pyglet.window.Window):
     def __init__(self, board, parameters: Params):
         self.parameter_input_width = 200
-        super().__init__(width=1000 + self.parameter_input_width, height=1000)
+        super().__init__(width=1000 + self.parameter_input_width, height=1000, resizable=False)
         self.parameters = parameters
         self.batch = pyglet.graphics.Batch()
         self.b = []
