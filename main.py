@@ -1,5 +1,5 @@
 from _thread import start_new_thread
-from algo import Point, A_Star, Params
+from algo import Point, PointBootStatus, A_Star, Params, BootStatus
 from vizualisation import Vizu, UIStatus
 
 def read_csv():
@@ -19,37 +19,42 @@ def read_csv():
                 x+=1
             board.append(row_numbers)
 
+if __name__=="__main__":
+    board = read_csv()
+    for y in board:
+        for x in y:
+            print(x, end=" ")
+        print()
 
-board = read_csv()
-for y in board:
-    for x in y:
-        print(x, end=" ")
-    print()
+    parameters = Params()
 
-parameters = Params()
+    vizu = Vizu(board, parameters)
+    start_new_thread(vizu.run, () )
 
-vizu = Vizu(board, parameters)
-start_new_thread(vizu.run, () )
+    calculator = A_Star(board, parameters)
 
-calculator = A_Star(board, parameters)
+    while True:
+        if vizu.uiStatus == UIStatus.STARTBERECHNUNG:
+            start = vizu.startPoint
+            ziel = vizu.goalPoint
 
-while True:
-    if vizu.uiStatus == UIStatus.STARTBERECHNUNG:
-        start = vizu.startPoint
-        goal = vizu.goalPoint
-        came_from, cost_so_far = calculator.calc(start, goal)
-        path = []
-        toTile = goal
-        path.append(toTile)
-        while toTile != start:
-            fromTile = came_from[toTile][0]
-            path.append(fromTile)
-            toTile = fromTile
-        path.reverse()
+            kommt_von, kosten_bis_punkt, ziel_mit_status = calculator.calc(start, ziel)
 
-        vizu.draw_path(path)
-        print("Günstigster Weg:", "->".join(str(x) for x in path))
 
-        vizu.uiStatus = UIStatus.STARTWAHL
+            path = []
+
+            toTile = ziel_mit_status
+            path.append(toTile)
+            while toTile != PointBootStatus(start, BootStatus.VERFUEGBAR):
+                fromTile = kommt_von[toTile]
+                path.append(fromTile)
+                toTile = fromTile
+            path.reverse()
+
+            vizu.draw_path(path)
+            print("Günstigster Weg:", "->".join(str(x.point) for x in path))
+            print("Gesamtkosten:", kosten_bis_punkt[ziel_mit_status])
+
+            vizu.uiStatus = UIStatus.STARTWAHL
 
 

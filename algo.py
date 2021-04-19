@@ -19,6 +19,19 @@ class BootStatus(Enum):
     SCHWIMMT = 1
     VERBRAUCHT = 2
 
+class PointBootStatus():
+    def __init__(self, point: Point, boot_status: BootStatus):
+        self.boot_status = boot_status
+        self.point = point
+    def __lt__(self, other):
+        return self.point < other.point
+    def __eq__(self, other):
+        return self.boot_status == other.boot_status and self.point == other.point
+    def __hash__(self):
+        return hash((self.boot_status, self.point))
+    def __str__(self):
+        return " ["+str(self.point)+" "+str(self.boot_status)+"]"
+
 class Params:
     def __init__(self):
         self.t_weg = 2
@@ -26,7 +39,7 @@ class Params:
         self.t_boot = 4
         self.t_wald = 6
         self.t_berg = 9
-        self.t_nicht_begehbar = 10000 #todo biggest int
+        self.t_nicht_begehbar = 1000000 #todo biggest int
 
 
 class A_Star:
@@ -43,8 +56,8 @@ class A_Star:
     # Wenn ein Boot verfügbar ist, kann dies benutzt werde, sindder Status geht auf 'SCHWIMMT'
     # Wenn man schon im Wasser ist (SCHWIMMT), kann man weiter auf dem Wasser fahren, oder an Land gehen
     # Geht man nach dem Status 'SCHWIMMT' an Land ist der boot_status 'VERBRAUCHT', das Boot kann nicht mehr genutzt werden
-    def kosten(self, a: Point, boot_status: BootStatus): 
-        feld = self.board[a.y][a.x]
+    def kosten(self, ziel: Point, boot_status: BootStatus) -> (int, BootStatus): 
+        feld = self.board[ziel.y][ziel.x]
         if feld == 0: # Wasser
             if boot_status == BootStatus.VERFUEGBAR:
                 return self.parameters.t_boot, BootStatus.SCHWIMMT
@@ -71,36 +84,42 @@ class A_Star:
                 return -1, 0
 
     # gibt benachbarten Kacheln zurück links, rechts, oben, unten (solange kein Kartenrand)
-    def nachbar(self, i: Point):
-        neighbors = [Point(i.x+1,i.y),Point(i.x,i.y+1),Point(i.x-1,i.y),Point(i.x,i.y-1)]
-        moin = [n for n in neighbors if n.x >= 0 and n.y >= 0 and n.x < len(self.board[0]) and n.y < len(self.board)]
-        return moin
+    def nachbar(self, p: Point) -> Point:
+        neighbors = [Point(p.x+1,p.y),Point(p.x,p.y+1),Point(p.x-1,p.y),Point(p.x,p.y-1)]
+        punkte_innerhalb_karte = [n for n in neighbors if n.x >= 0 and n.y >= 0 and n.x < len(self.board[0]) and n.y < len(self.board)]
+        return punkte_innerhalb_karte
 
-    # a star calculation
-    def calc(self, start: Point, goal: Point):
-        print("Berechne kürzesten Weg von",start,"nach",goal,"\nmit den Parametern",vars(self.parameters))
+    # a star Algorithmus
+    def calc(self, startPoint: Point, zielPoint: Point):
+        print("Berechne kürzesten Weg von",startPoint,"nach",zielPoint,"\nmit den Parametern",vars(self.parameters))
         queue = PriorityQueue()
+        start = PointBootStatus(startPoint,BootStatus.VERFUEGBAR)
         queue.put((0, start))
-        came_from = dict()
-        cost_so_far = dict()
-        came_from[start] = (None, BootStatus.VERFUEGBAR)
-        cost_so_far[start] = 0
+
+        kommt_von = dict()
+        kommt_von[start] = PointBootStatus(None, BootStatus.VERFUEGBAR)
+
+        kosten_bis_punkt = dict()
+        kosten_bis_punkt[start] = 0
         
+        currentPoint = None
         while not queue.empty():
             current = queue.get()
             currentPoint = current[1]
-            if currentPoint == goal:
+            if currentPoint.point == zielPoint:
                 break
             
-            for p in self.nachbar(currentPoint):
-                boot_status = came_from[currentPoint][1]
-                k, boot_status = self.kosten(p, boot_status)
-                new_cost = cost_so_far[currentPoint] + k
-                if p not in cost_so_far or new_cost < cost_so_far[p]:
-                    cost_so_far[p] = new_cost
-                    priority = new_cost + self.dist(p, goal)
-                    queue.put((priority, p))
-                    came_from[p] = (currentPoint, boot_status)
+            boot_status = currentPoint.boot_status
+            for p in self.nachbar(currentPoint.point):
+                k, neuer_boot_status = self.kosten(p, boot_status)
+                new_cost = kosten_bis_punkt[currentPoint] + k
+                p_mit_boot_status = PointBootStatus(p, neuer_boot_status)
+                if p_mit_boot_status not in kosten_bis_punkt or new_cost < kosten_bis_punkt[p_mit_boot_status]:
+                    kosten_bis_punkt[p_mit_boot_status] = new_cost
+                    priority = new_cost + self.dist(p, zielPoint)
+                    queue.put((priority, p_mit_boot_status))
+                    kommt_von[p_mit_boot_status] = currentPoint
 
-        return came_from, cost_so_far
+        ziel = currentPoint
+        return kommt_von, kosten_bis_punkt, ziel
 

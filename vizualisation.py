@@ -106,8 +106,8 @@ class Vizu(pyglet.window.Window):
         path = []
         rect_width = self.rect_width
         for i in range(len(points)-1):
-            start = points[i]
-            end = points[i+1]
+            start = points[i].point
+            end = points[i+1].point
             path.append(shapes.Line(*self.coord_to_window(start.x,start.y, True), 
                              *self.coord_to_window(end.x,end.y, True), width=5, color=(200,50,50), batch=self.batch))
         self.path = path
