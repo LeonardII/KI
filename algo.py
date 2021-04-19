@@ -1,5 +1,6 @@
 from queue import PriorityQueue
 from enum import Enum
+import sys
 
 class Point:
     def __init__(self, x: int, y: int):
@@ -39,7 +40,7 @@ class Params:
         self.t_boot = 4
         self.t_wald = 6
         self.t_berg = 9
-        self.t_nicht_begehbar = 1000000 #todo biggest int
+        self.t_nicht_begehbar = sys.maxsize # Ist unendlich, bzw größer als jede andere Zahl
 
 
 class A_Star:
@@ -111,12 +112,13 @@ class A_Star:
             
             boot_status = currentPoint.boot_status
             for p in self.nachbar(currentPoint.point):
-                k, neuer_boot_status = self.kosten(p, boot_status)
-                new_cost = kosten_bis_punkt[currentPoint] + k
-                p_mit_boot_status = PointBootStatus(p, neuer_boot_status)
-                if p_mit_boot_status not in kosten_bis_punkt or new_cost < kosten_bis_punkt[p_mit_boot_status]:
-                    kosten_bis_punkt[p_mit_boot_status] = new_cost
-                    priority = new_cost + self.dist(p, zielPoint)
+                p_kosten, p_boot_status = self.kosten(p, boot_status)
+                p_gesamt_kosten = kosten_bis_punkt[currentPoint] + p_kosten
+                p_mit_boot_status = PointBootStatus(p, p_boot_status)
+
+                if p_mit_boot_status not in kosten_bis_punkt or p_gesamt_kosten < kosten_bis_punkt[p_mit_boot_status]:
+                    kosten_bis_punkt[p_mit_boot_status] = p_gesamt_kosten
+                    priority = p_gesamt_kosten + self.dist(p, zielPoint)
                     queue.put((priority, p_mit_boot_status))
                     kommt_von[p_mit_boot_status] = currentPoint
 

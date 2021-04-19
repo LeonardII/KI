@@ -220,7 +220,6 @@ class TextWidget(object):
         self.layout.x = x
         self.layout.y = y
 
-        # Rectangular outline
         pad = 2
         self.rectangle = Rectangle(x - pad, y - pad, 
                                    x + width + pad, y + height + pad, batch)
@@ -243,7 +242,6 @@ class Button(object):
 
 
 class Rectangle(object):
-    '''Draws a rectangle into a batch.'''
     def __init__(self, x1, y1, x2, y2, batch):
         self.vertex_list = batch.add(4, pyglet.gl.GL_QUADS, None,
             ('v2i', [x1, y1, x2, y1, x2, y2, x1, y2]),
