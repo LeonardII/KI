@@ -21,12 +21,11 @@ class Vizu(pyglet.window.Window):
 
         lange_seite = max(len(board),len(board[0]))
         self.rect_width = self.height/lange_seite
-        i = 0
-        for row in board:
-            for cell in row:
-                number = int(cell)
-                self.b.append(shapes.Rectangle(*self.coord_to_window((i%40), int(i/40), False),self.rect_width, self.rect_width, color=self.get_color(number), batch=self.batch))
-                i+=1
+
+        for y in range(len(board)):
+            for x in range(len(board[y])):
+                number = int(board[y][x])
+                self.b.append(shapes.Rectangle(*self.coord_to_window(x, y, False),self.rect_width, self.rect_width, color=self.get_color(number), batch=self.batch))
         
         self.startPoint = Point(0,0)
         self.startTile = None
