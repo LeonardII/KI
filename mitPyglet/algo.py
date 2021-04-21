@@ -95,7 +95,7 @@ class A_Star:
                 return -1, 0
 
     # gibt benachbarten Kacheln zurück links, rechts, oben, unten (solange kein Kartenrand)
-    def nachbar(self, p: Point) -> Point:
+    def nachbar(self, p: Point):
         neighbors = [Point(p.x+1,p.y),Point(p.x,p.y+1),Point(p.x-1,p.y),Point(p.x,p.y-1)]
         punkte_innerhalb_karte = [n for n in neighbors if n.x >= 0 and n.y >= 0 and n.x < len(self.board[0]) and n.y < len(self.board)]
         return punkte_innerhalb_karte
